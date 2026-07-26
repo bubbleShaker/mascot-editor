@@ -1,0 +1,26 @@
+{
+  "name": "zunda-editor",
+  "version": "0.1.0",
+  "description": "色とキャラを自由にカスタムできる、拡張しやすい GUI テキストエディタ (Electron + React)",
+  "license": "MIT",
+  "author": "bubbleShaker",
+  "main": "src/main/main.js",
+  "scripts": {
+    "dev:vite": "vite",
+    "dev": "concurrently -k -n vite,electron -c cyan,green \"vite\" \"wait-on tcp:5173 && cross-env ZUNDA_DEV=1 electron .\"",
+    "build": "vite build",
+    "start": "cross-env ZUNDA_DEV=0 electron ."
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron": "^32.0.0",
+    "vite": "^5.4.11",
+    "wait-on": "^8.0.1"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}

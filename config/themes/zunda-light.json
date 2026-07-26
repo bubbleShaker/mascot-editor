@@ -1,0 +1,15 @@
+{
+  "id": "zunda-light",
+  "label": "ずんだライト",
+  "colors": {
+    "bg": "#eef1f5",
+    "panel": "#ffffff",
+    "fg": "#343b58",
+    "muted": "#8990b3",
+    "accent": "#587539",
+    "editorBg": "#ffffff",
+    "editorFg": "#343b58",
+    "border": "#d3d8e2",
+    "selection": "#c9d9b8"
+  }
+}

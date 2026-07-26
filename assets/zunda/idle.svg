@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240">
+  <!-- 差し替え用プレースホルダー: ずんだもん風の緑のマスコット(通常) -->
+  <ellipse cx="100" cy="150" rx="66" ry="72" fill="#8fd14f"/>
+  <ellipse cx="100" cy="150" rx="66" ry="72" fill="none" stroke="#5f9e2e" stroke-width="4"/>
+  <!-- ずんだの芽(アンテナ) -->
+  <path d="M100 84 C96 40 84 20 70 8 C96 18 104 46 100 84 Z" fill="#a7e06a" stroke="#5f9e2e" stroke-width="3"/>
+  <!-- ほっぺ -->
+  <circle cx="66" cy="158" r="9" fill="#f7a6c0" opacity="0.8"/>
+  <circle cx="134" cy="158" r="9" fill="#f7a6c0" opacity="0.8"/>
+  <!-- 目 -->
+  <circle cx="78" cy="140" r="7" fill="#2b2b2b"/>
+  <circle cx="122" cy="140" r="7" fill="#2b2b2b"/>
+  <circle cx="80" cy="137" r="2.4" fill="#fff"/>
+  <circle cx="124" cy="137" r="2.4" fill="#fff"/>
+  <!-- 口(まっすぐ) -->
+  <path d="M92 166 Q100 172 108 166" fill="none" stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

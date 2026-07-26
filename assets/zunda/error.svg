@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240">
+  <!-- 差し替え用プレースホルダー: ずんだもん風の緑のマスコット(困り) -->
+  <ellipse cx="100" cy="150" rx="66" ry="72" fill="#8fd14f"/>
+  <ellipse cx="100" cy="150" rx="66" ry="72" fill="none" stroke="#5f9e2e" stroke-width="4"/>
+  <path d="M100 84 C96 40 84 20 70 8 C96 18 104 46 100 84 Z" fill="#a7e06a" stroke="#5f9e2e" stroke-width="3"/>
+  <circle cx="66" cy="160" r="9" fill="#f7a6c0" opacity="0.7"/>
+  <circle cx="134" cy="160" r="9" fill="#f7a6c0" opacity="0.7"/>
+  <!-- 目(困り眉ぎみ) -->
+  <path d="M70 136 Q78 142 86 138" fill="none" stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M114 138 Q122 142 130 136" fill="none" stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="78" cy="146" r="6" fill="#2b2b2b"/>
+  <circle cx="122" cy="146" r="6" fill="#2b2b2b"/>
+  <!-- 口(への字) -->
+  <path d="M90 172 Q100 164 110 172" fill="none" stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- 汗 -->
+  <path d="M150 120 q6 10 0 16 q-6 -6 0 -16 Z" fill="#7fd0ff" stroke="#3aa0e0" stroke-width="1.5"/>
+</svg>

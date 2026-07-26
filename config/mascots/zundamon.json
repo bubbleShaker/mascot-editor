@@ -1,0 +1,15 @@
+{
+  "id": "zundamon",
+  "label": "ずんだもん",
+  "default": "idle",
+  "states": {
+    "idle": "assets/zunda/idle.svg",
+    "happy": "assets/zunda/happy.svg",
+    "error": "assets/zunda/error.svg"
+  },
+  "lines": {
+    "idle": "なにか書くのだ？",
+    "happy": "いいかんじなのだ！",
+    "error": "むむ、なにかおかしいのだ…"
+  }
+}

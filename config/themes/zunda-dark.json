@@ -1,0 +1,15 @@
+{
+  "id": "zunda-dark",
+  "label": "ずんだダーク",
+  "colors": {
+    "bg": "#1a1b26",
+    "panel": "#16161e",
+    "fg": "#c0caf5",
+    "muted": "#565f89",
+    "accent": "#9ece6a",
+    "editorBg": "#16161e",
+    "editorFg": "#c0caf5",
+    "border": "#2a2e42",
+    "selection": "#33467c"
+  }
+}

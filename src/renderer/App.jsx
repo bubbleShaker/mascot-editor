@@ -49,6 +49,17 @@ export default function App() {
     document.title = `${dirty ? '● ' : ''}${fileName} — zunda-editor`
   }, [dirty, fileName])
 
+  // 未保存のまま閉じ/リロードしようとしたら確認する(データ消失防止)。
+  useEffect(() => {
+    if (!dirty) return
+    const onBeforeUnload = (e) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [dirty])
+
   const handleOpen = useCallback(async () => {
     try {
       const res = await fileService.open()

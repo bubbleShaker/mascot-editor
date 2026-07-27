@@ -19,16 +19,17 @@ const electronService = {
 }
 
 function downloadBlob(content, filename) {
+  const name = filename || 'untitled.txt'
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = filename || 'untitled.txt'
+  a.download = name
   document.body.appendChild(a)
   a.click()
   a.remove()
   URL.revokeObjectURL(url)
-  return { path: null, name: a.download }
+  return { path: null, name }
 }
 
 const webService = {
@@ -52,4 +53,3 @@ const webService = {
 }
 
 export const fileService = isElectron() ? electronService : webService
-export const canOverwrite = isElectron() // ブラウザは常に名前付き保存になる

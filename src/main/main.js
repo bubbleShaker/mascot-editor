@@ -12,6 +12,13 @@ const TEXT_FILTERS = [
 ]
 
 // renderer からの file 操作要求を受ける。fs はここ(main)だけが触る。
+//
+// セキュリティ方針: renderer は敵対的入力源とみなす。file:save で任意パスへ
+// 書き込めると、renderer 乗っ取り時に任意ファイル上書きの経路になる。そこで
+// 「このセッションで dialog を通して開いた/保存したパス」だけを allowedPaths に
+// 記録し、上書き保存(file:save)はその集合内のパスに限定する。
+const allowedPaths = new Set()
+
 function registerFileHandlers() {
   ipcMain.handle('file:open', async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
@@ -21,23 +28,29 @@ function registerFileHandlers() {
     if (canceled || !filePaths[0]) return null
     const filePath = filePaths[0]
     const content = await fs.readFile(filePath, 'utf8')
+    allowedPaths.add(filePath)
     return { path: filePath, name: path.basename(filePath), content }
   })
 
   ipcMain.handle('file:save', async (_e, { path: filePath, content }) => {
-    // path が無い時は保存できない(呼び手が saveAs を使う)
-    if (!filePath) return null
+    // 型と、ダイアログ由来の許可済みパスであることを検証してから書く。
+    if (typeof filePath !== 'string' || typeof content !== 'string') return null
+    if (!allowedPaths.has(filePath)) {
+      throw new Error('保存が許可されていないパスなのだ(先に開くか名前を付けて保存するのだ)')
+    }
     await fs.writeFile(filePath, content, 'utf8')
     return { path: filePath, name: path.basename(filePath) }
   })
 
   ipcMain.handle('file:saveAs', async (_e, { content, suggestedName }) => {
+    if (typeof content !== 'string') return null
     const { canceled, filePath } = await dialog.showSaveDialog({
-      defaultPath: suggestedName || 'untitled.txt',
+      defaultPath: typeof suggestedName === 'string' ? suggestedName : 'untitled.txt',
       filters: TEXT_FILTERS,
     })
     if (canceled || !filePath) return null
     await fs.writeFile(filePath, content, 'utf8')
+    allowedPaths.add(filePath)
     return { path: filePath, name: path.basename(filePath) }
   })
 }

@@ -14,7 +14,7 @@ function applyTheme(theme) {
   }
 }
 
-const INITIAL_TEXT = '// ずんだエディタなのだ\n// ここに書くのだ\n'
+const INITIAL_TEXT = '// mascot-editor\n// ここに書く\n'
 
 export default function App() {
   const themes = useMemo(() => loadThemes(), [])

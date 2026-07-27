@@ -36,7 +36,7 @@ function registerFileHandlers() {
     // 型と、ダイアログ由来の許可済みパスであることを検証してから書く。
     if (typeof filePath !== 'string' || typeof content !== 'string') return null
     if (!allowedPaths.has(filePath)) {
-      throw new Error('保存が許可されていないパスなのだ(先に開くか名前を付けて保存するのだ)')
+      throw new Error('保存が許可されていないパスです(先に開くか、名前を付けて保存してください)')
     }
     await fs.writeFile(filePath, content, 'utf8')
     return { path: filePath, name: path.basename(filePath) }

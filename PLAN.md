@@ -12,7 +12,7 @@
 ## ディレクトリ
 ```
 src/main/main.js        Electron main。window生成・IPC(ファイル操作)
-src/main/preload.js     contextBridge で安全な window.api を公開
+src/main/preload.js     contextBridge で安全な window.mascotEditor を公開
 src/renderer/           React アプリ
   App.jsx               全体レイアウト
   components/
@@ -28,7 +28,7 @@ assets/                 キャラ画像素材
 ## マイルストーン
 - [x] M0: Walking skeleton。Electron+React が起動し、textarea 編集・
       テーマJSON適用・マスコット表示ができる(=拡張アーキ実証)。
-- [ ] M1: ファイル open/save。編集中/保存/エラーでマスコット表情が変わる。
+- [x] M1: ファイル open/save。編集中/保存/エラーでマスコット表情が変わる。
       環境で実装を切替える fileService 抽象(Electron=IPC+fs / ブラウザ=input+Blob)で、
       Pages プレビューでも open/save が動くようにする。
 - [ ] M2: テーマ切替UI と複数テーマ。ユーザーが JSON 追加で増やせる導線。

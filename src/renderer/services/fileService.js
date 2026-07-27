@@ -1,21 +1,23 @@
 // 依存性逆転の要: 本体(App)は「開ける/保存できる何か」にだけ依存する。
 // 実体は実行環境で切り替わる:
-//   - Electron … preload の window.api.file(IPC → main の fs)
+//   - Electron … preload の window.mascotEditor.file(IPC → main の fs)
 //   - ブラウザ … <input type=file> で開く / Blob ダウンロードで保存
 // これで Pages(素ブラウザ)でも open/save が動く。
 //
 // 各メソッドの返り値は { path, name, content? } または null(キャンセル)。
 
-const isElectron = () => Boolean(window.api?.file)
+// preload が立てた旗で判定する。メソッドの有無から推測すると、
+// 偶然同じ形をした別物を Electron と誤認しうる。
+const isElectron = () => window.mascotEditor?.isElectron === true
 
 const electronService = {
-  open: () => window.api.file.open(),
+  open: () => window.mascotEditor.file.open(),
   save: ({ path, content, suggestedName }) =>
     path
-      ? window.api.file.save(path, content)
-      : window.api.file.saveAs(content, suggestedName),
+      ? window.mascotEditor.file.save(path, content)
+      : window.mascotEditor.file.saveAs(content, suggestedName),
   saveAs: ({ content, suggestedName }) =>
-    window.api.file.saveAs(content, suggestedName),
+    window.mascotEditor.file.saveAs(content, suggestedName),
 }
 
 function downloadBlob(content, filename) {

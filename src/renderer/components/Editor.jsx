@@ -8,7 +8,7 @@ export default function Editor({ value, onChange }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         spellCheck={false}
-        placeholder="ここに書くのだ…"
+        placeholder="ここに書く…"
       />
     </div>
   )

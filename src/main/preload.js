@@ -1,8 +1,14 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
-// renderer(React) からは window.api 経由でのみ main の機能に触れる。
+// renderer(React) からは window.mascotEditor 経由でのみ main の機能に触れる。
 // file 操作は IPC を薄くラップして公開(生の ipcRenderer は渡さない)。
-contextBridge.exposeInMainWorld('api', {
+//
+// 名前を api ではなくアプリ固有名にしているのは、ブラウザで動かす時に
+// 第三者ライブラリの window.api と衝突して環境判定を誤らせないため。
+contextBridge.exposeInMainWorld('mascotEditor', {
+  // 「Electron で動いている」ことの明示マーカー。
+  // renderer 側はメソッドの有無を推測せず、この旗だけを見て実装を選ぶ。
+  isElectron: true,
   version: '0.1.0',
   platform: process.platform,
   file: {

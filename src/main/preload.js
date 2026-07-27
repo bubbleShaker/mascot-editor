@@ -1,8 +1,14 @@
-const { contextBridge } = require('electron')
+const { contextBridge, ipcRenderer } = require('electron')
 
 // renderer(React) からは window.zunda 経由でのみ main の機能に触れる。
-// M0 では最小。M1 でファイル open/save の IPC をここに足していく。
+// file 操作は IPC を薄くラップして公開(生の ipcRenderer は渡さない)。
 contextBridge.exposeInMainWorld('zunda', {
   version: '0.1.0',
   platform: process.platform,
+  file: {
+    open: () => ipcRenderer.invoke('file:open'),
+    save: (path, content) => ipcRenderer.invoke('file:save', { path, content }),
+    saveAs: (content, suggestedName) =>
+      ipcRenderer.invoke('file:saveAs', { content, suggestedName }),
+  },
 })

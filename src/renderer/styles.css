@@ -39,6 +39,34 @@ body {
 .toolbar__spacer {
   flex: 1;
 }
+.toolbar__actions {
+  display: flex;
+  gap: 6px;
+}
+.btn {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.toolbar__file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+.toolbar__dot {
+  color: var(--color-accent);
+  font-size: 10px;
+}
 .toolbar__mascot {
   color: var(--color-muted);
   font-size: 13px;

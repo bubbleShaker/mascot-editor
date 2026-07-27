@@ -2,8 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs/promises')
 
-// ZUNDA_DEV=1 のとき Vite dev server を読む。未設定/0 なら build 済み dist を読む。
-const isDev = process.env.ZUNDA_DEV === '1'
+// MASCOT_DEV=1 のとき Vite dev server を読む。未設定/0 なら build 済み dist を読む。
+const isDev = process.env.MASCOT_DEV === '1'
 
 // テキストファイルの絞り込み(開く/保存ダイアログ共通)
 const TEXT_FILTERS = [

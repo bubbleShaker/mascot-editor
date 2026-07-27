@@ -1,21 +1,21 @@
 // 依存性逆転の要: 本体(App)は「開ける/保存できる何か」にだけ依存する。
 // 実体は実行環境で切り替わる:
-//   - Electron … preload の window.zunda.file(IPC → main の fs)
+//   - Electron … preload の window.api.file(IPC → main の fs)
 //   - ブラウザ … <input type=file> で開く / Blob ダウンロードで保存
 // これで Pages(素ブラウザ)でも open/save が動く。
 //
 // 各メソッドの返り値は { path, name, content? } または null(キャンセル)。
 
-const isElectron = () => Boolean(window.zunda?.file)
+const isElectron = () => Boolean(window.api?.file)
 
 const electronService = {
-  open: () => window.zunda.file.open(),
+  open: () => window.api.file.open(),
   save: ({ path, content, suggestedName }) =>
     path
-      ? window.zunda.file.save(path, content)
-      : window.zunda.file.saveAs(content, suggestedName),
+      ? window.api.file.save(path, content)
+      : window.api.file.saveAs(content, suggestedName),
   saveAs: ({ content, suggestedName }) =>
-    window.zunda.file.saveAs(content, suggestedName),
+    window.api.file.saveAs(content, suggestedName),
 }
 
 function downloadBlob(content, filename) {

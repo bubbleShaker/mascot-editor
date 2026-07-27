@@ -1,8 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
-// renderer(React) からは window.zunda 経由でのみ main の機能に触れる。
+// renderer(React) からは window.api 経由でのみ main の機能に触れる。
 // file 操作は IPC を薄くラップして公開(生の ipcRenderer は渡さない)。
-contextBridge.exposeInMainWorld('zunda', {
+contextBridge.exposeInMainWorld('api', {
   version: '0.1.0',
   platform: process.platform,
   file: {

@@ -46,7 +46,7 @@ export default function App() {
 
   // タイトルに 未保存(*) と ファイル名 を反映。
   useEffect(() => {
-    document.title = `${dirty ? '● ' : ''}${fileName} — zunda-editor`
+    document.title = `${dirty ? '● ' : ''}${fileName} — mascot-editor`
   }, [dirty, fileName])
 
   // 未保存のまま閉じ/リロードしようとしたら確認する(データ消失防止)。

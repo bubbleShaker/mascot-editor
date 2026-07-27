@@ -11,7 +11,7 @@ export default function Toolbar({
 }) {
   return (
     <header className="toolbar">
-      <div className="toolbar__brand">🫛 zunda-editor</div>
+      <div className="toolbar__brand">🎨 mascot-editor</div>
 
       <div className="toolbar__actions">
         <button className="btn" onClick={onOpen} title="開く (Ctrl+O)">

@@ -1,4 +1,4 @@
-# zunda-editor
+# mascot-editor
 
 色とキャラを自由にカスタムできる、拡張しやすい GUI テキストエディタ。
 Electron + React + Vite 製。
@@ -12,6 +12,13 @@ Electron + React + Vite 製。
 - 画像 … `assets/` に置いて JSON から参照(差し替えるだけで別キャラに)。
 
 新しいテーマ/キャラは、対応する JSON(と画像)を足すだけで増える。
+
+## 同梱サンプル
+特定のキャラ専用ツールではない。以下は「拡張のお手本」として同梱している1例で、
+消しても本体は動く。
+
+- キャラ … `config/mascots/zundamon.json` + `assets/zunda/*.svg`
+- テーマ … `config/themes/zunda-dark.json` / `zunda-light.json`
 
 ## 開発
 ```bash

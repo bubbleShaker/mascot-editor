@@ -1,5 +1,5 @@
 {
-  "name": "zunda-editor",
+  "name": "mascot-editor",
   "version": "0.1.0",
   "description": "色とキャラを自由にカスタムできる、拡張しやすい GUI テキストエディタ (Electron + React)",
   "license": "MIT",
@@ -7,9 +7,9 @@
   "main": "src/main/main.js",
   "scripts": {
     "dev:vite": "vite",
-    "dev": "concurrently -k -n vite,electron -c cyan,green \"vite\" \"wait-on tcp:5173 && cross-env ZUNDA_DEV=1 electron .\"",
+    "dev": "concurrently -k -n vite,electron -c cyan,green \"vite\" \"wait-on tcp:5173 && cross-env MASCOT_DEV=1 electron .\"",
     "build": "vite build",
-    "start": "cross-env ZUNDA_DEV=0 electron ."
+    "start": "cross-env MASCOT_DEV=0 electron ."
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

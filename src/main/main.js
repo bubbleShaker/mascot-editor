@@ -2,8 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs/promises')
 
-// ZUNDA_DEV=1 のとき Vite dev server を読む。未設定/0 なら build 済み dist を読む。
-const isDev = process.env.ZUNDA_DEV === '1'
+// MASCOT_DEV=1 のとき Vite dev server を読む。未設定/0 なら build 済み dist を読む。
+const isDev = process.env.MASCOT_DEV === '1'
 
 // テキストファイルの絞り込み(開く/保存ダイアログ共通)
 const TEXT_FILTERS = [
@@ -36,7 +36,7 @@ function registerFileHandlers() {
     // 型と、ダイアログ由来の許可済みパスであることを検証してから書く。
     if (typeof filePath !== 'string' || typeof content !== 'string') return null
     if (!allowedPaths.has(filePath)) {
-      throw new Error('保存が許可されていないパスなのだ(先に開くか名前を付けて保存するのだ)')
+      throw new Error('保存が許可されていないパスです(先に開くか、名前を付けて保存してください)')
     }
     await fs.writeFile(filePath, content, 'utf8')
     return { path: filePath, name: path.basename(filePath) }

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { loadThemes, loadMascots } from './config/loader.js'
+import { fileService } from './services/fileService.js'
 import Toolbar from './components/Toolbar.jsx'
 import Editor from './components/Editor.jsx'
 import Mascot from './components/Mascot.jsx'
@@ -13,21 +14,92 @@ function applyTheme(theme) {
   }
 }
 
+const INITIAL_TEXT = '// ずんだエディタなのだ\n// ここに書くのだ\n'
+
 export default function App() {
   const themes = useMemo(() => loadThemes(), [])
   const mascots = useMemo(() => loadMascots(), [])
 
   const [themeId, setThemeId] = useState(themes[0]?.id)
-  const [text, setText] = useState('// ずんだエディタなのだ\n// ここに書くのだ\n')
-  // マスコットの状態。M1 で保存/エラーに連動させる。M0 は入力有無で happy/idle。
+  const [text, setText] = useState(INITIAL_TEXT)
+  const [filePath, setFilePath] = useState(null)
+  const [fileName, setFileName] = useState('untitled.txt')
+  const [dirty, setDirty] = useState(false)
   const [mascotState, setMascotState] = useState('idle')
 
   const theme = themes.find((t) => t.id === themeId) ?? themes[0]
   const mascot = mascots[0]
 
+  // happy 表示を数秒で idle に戻すためのタイマー管理。
+  const happyTimer = useRef(null)
+  const flash = useCallback((state, revert = 'idle', ms = 1800) => {
+    setMascotState(state)
+    clearTimeout(happyTimer.current)
+    if (revert) happyTimer.current = setTimeout(() => setMascotState(revert), ms)
+  }, [])
+
+  useEffect(() => () => clearTimeout(happyTimer.current), [])
+
   useEffect(() => {
     if (theme) applyTheme(theme)
   }, [theme])
+
+  // タイトルに 未保存(*) と ファイル名 を反映。
+  useEffect(() => {
+    document.title = `${dirty ? '● ' : ''}${fileName} — zunda-editor`
+  }, [dirty, fileName])
+
+  const handleOpen = useCallback(async () => {
+    try {
+      const res = await fileService.open()
+      if (!res) return // キャンセル
+      setText(res.content)
+      setFilePath(res.path)
+      setFileName(res.name)
+      setDirty(false)
+      flash('happy')
+    } catch (e) {
+      console.error(e)
+      flash('error')
+    }
+  }, [flash])
+
+  const handleSave = useCallback(
+    async (asNew = false) => {
+      try {
+        const res = asNew
+          ? await fileService.saveAs({ content: text, suggestedName: fileName })
+          : await fileService.save({ path: filePath, content: text, suggestedName: fileName, name: fileName })
+        if (!res) return // キャンセル
+        setFilePath(res.path)
+        setFileName(res.name)
+        setDirty(false)
+        flash('happy')
+      } catch (e) {
+        console.error(e)
+        flash('error')
+      }
+    },
+    [text, filePath, fileName, flash]
+  )
+
+  // ショートカット: Ctrl/Cmd+S 保存 / Shift 付きで名前を付けて保存 / Ctrl+O 開く。
+  useEffect(() => {
+    const onKey = (e) => {
+      const mod = e.ctrlKey || e.metaKey
+      if (!mod) return
+      const key = e.key.toLowerCase()
+      if (key === 's') {
+        e.preventDefault()
+        handleSave(e.shiftKey)
+      } else if (key === 'o') {
+        e.preventDefault()
+        handleOpen()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [handleSave, handleOpen])
 
   return (
     <div className="app">
@@ -36,13 +108,17 @@ export default function App() {
         themeId={themeId}
         onThemeChange={setThemeId}
         mascotLabel={mascot?.label}
+        fileName={fileName}
+        dirty={dirty}
+        onOpen={handleOpen}
+        onSave={() => handleSave(false)}
       />
       <div className="workspace">
         <Editor
           value={text}
           onChange={(v) => {
             setText(v)
-            setMascotState(v.trim().length > 0 ? 'happy' : 'idle')
+            setDirty(true)
           }}
         />
         <Mascot mascot={mascot} state={mascotState} />

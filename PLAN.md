@@ -36,6 +36,13 @@ assets/                 キャラ画像素材
 - [ ] M4: ★キャラのメディア自由選択。ユーザーが手元の画像/動画(png/gif/webp/mp4/webm)を
       ピッカーで選び、マスコットに設定できる。Mascot は拡張子で <img>/<video> を出し分け、
       状態(idle/happy/error)ごとに別メディアも割当可能。選択内容は永続化。
+  - [x] M4-1: 描画層の動画対応。loader が `{ url, kind }` を返し、MascotMedia が
+        kind で `<img>`/`<video>` を出し分ける。JSON に動画パスを書けば動く状態。
+  - [ ] M4-2: mediaService(環境切替) + ピッカー UI で 1 状態を差し替え。
+        Electron はカスタムプロトコル `mascot-media://` で許可済みパスのみ配信
+        (M1 の allowedPaths と同じ防御線を読み出しにも延長)。ブラウザは blob URL。
+  - [ ] M4-3: 状態(idle/happy/error)ごとの個別割当 UI。
+  - [ ] M4-4: 選択内容の永続化(M5 と連動)。
 - [ ] M5: 設定永続化(最後のテーマ/キャラ/メディア/開いてたファイル)。
 
 ## 長期ゴール(ユーザー要望)

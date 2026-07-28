@@ -2,9 +2,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { loadThemes, loadMascots } from './config/loader.js'
 import { fileService } from './services/fileService.js'
 import { mediaService } from './services/mediaService.js'
+import {
+  assignAll,
+  entriesToRelease,
+  statesOf,
+  toDisplayMap,
+} from './services/mediaAssignments.mjs'
 import Toolbar from './components/Toolbar.jsx'
 import Editor from './components/Editor.jsx'
 import Mascot from './components/Mascot.jsx'
+import MediaAssignPanel from './components/MediaAssignPanel.jsx'
 
 // テーマの colors を CSS カスタムプロパティ(--color-*)へ流し込む。
 // これで本体の CSS は具体的な色を知らず、変数だけを参照できる。
@@ -27,11 +34,15 @@ export default function App() {
   const [fileName, setFileName] = useState('untitled.txt')
   const [dirty, setDirty] = useState(false)
   const [mascotState, setMascotState] = useState('idle')
-  // ユーザーがピッカーで選んだ素材({ url, kind, name, release })。null なら同梱サンプル。
-  const [mediaOverride, setMediaOverride] = useState(null)
+  // 状態 → ユーザーが選んだ素材({ url, kind, name, release })。未割当は同梱サンプル。
+  const [assignments, setAssignments] = useState({})
+  // 割当パネルを指している間だけの一時表示。実際の mascotState は変えない。
+  const [previewState, setPreviewState] = useState(null)
 
   const theme = themes.find((t) => t.id === themeId) ?? themes[0]
   const mascot = mascots[0]
+  // 割り当て可能な状態は JSON 由来。states を増やせば UI の行も増える。
+  const mascotStates = useMemo(() => statesOf(mascot), [mascot])
 
   // happy 表示を数秒で idle に戻すためのタイマー管理。
   const happyTimer = useRef(null)
@@ -100,30 +111,56 @@ export default function App() {
   // 選択済み素材の後始末を確実にするため、state と別に ref でも持つ。
   // release() は副作用なので setState の更新関数の中では呼べない
   // (React 18 の StrictMode は更新関数を二重に呼ぶため、生きている URL を
-  //  解放してしまう)。差し替えは必ずこの applyOverride を通す。
-  const overrideRef = useRef(null)
-  const applyOverride = useCallback((next) => {
-    overrideRef.current?.release?.()
-    overrideRef.current = next
-    setMediaOverride(next)
+  //  解放してしまう)。差し替えは必ずこの applyAssignments を通す。
+  //
+  // 解放対象の判定は entriesToRelease に任せる: 同じエントリを複数状態が
+  // 参照していることがあるので、「どこからも参照されなくなった分」だけを解放する。
+  const assignmentsRef = useRef({})
+  const applyAssignments = useCallback((next) => {
+    for (const entry of entriesToRelease(assignmentsRef.current, next)) {
+      entry.release?.()
+    }
+    assignmentsRef.current = next
+    setAssignments(next)
   }, [])
 
-  // アンマウント時に最後の1件を解放する。
-  useEffect(() => () => overrideRef.current?.release?.(), [])
+  // アンマウント時に残り全部を解放する。
+  useEffect(() => () => applyAssignments({}), [applyAssignments])
 
-  const handlePickMedia = useCallback(async () => {
-    try {
-      const picked = await mediaService.pick()
-      if (!picked) return // キャンセル
-      applyOverride(picked)
-      flash('happy')
-    } catch (e) {
-      console.error(e)
-      flash('error')
-    }
-  }, [applyOverride, flash])
+  // 素材を選ばせて、出来上がった割当マップを作る関数を受け取り適用する。
+  // 「1状態だけ」と「全部に適用」でダイアログ〜エラー処理が同じなので共通化する。
+  const pickInto = useCallback(
+    async (buildNext) => {
+      try {
+        const picked = await mediaService.pick()
+        if (!picked) return // キャンセル
+        applyAssignments(buildNext(picked))
+        flash('happy')
+      } catch (e) {
+        console.error(e)
+        flash('error')
+      }
+    },
+    [applyAssignments, flash]
+  )
 
-  const handleResetMedia = useCallback(() => applyOverride(null), [applyOverride])
+  const handlePickFor = useCallback(
+    (state) =>
+      pickInto((picked) => ({ ...assignmentsRef.current, [state]: picked })),
+    [pickInto]
+  )
+
+  const handleApplyAll = useCallback(
+    () => pickInto((picked) => assignAll(mascotStates, picked)),
+    [pickInto, mascotStates]
+  )
+
+  const handleClearFor = useCallback(
+    (state) => applyAssignments({ ...assignmentsRef.current, [state]: null }),
+    [applyAssignments]
+  )
+
+  const displayAssignments = useMemo(() => toDisplayMap(assignments), [assignments])
 
   // ショートカット: Ctrl/Cmd+S 保存 / Shift 付きで名前を付けて保存 / Ctrl+O 開く。
   useEffect(() => {
@@ -154,9 +191,6 @@ export default function App() {
         dirty={dirty}
         onOpen={handleOpen}
         onSave={() => handleSave(false)}
-        mediaName={mediaOverride?.name}
-        onPickMedia={handlePickMedia}
-        onResetMedia={handleResetMedia}
       />
       <div className="workspace">
         <Editor
@@ -166,15 +200,24 @@ export default function App() {
             setDirty(true)
           }}
         />
-        {/* Mascot へ渡すのは表示に要る { url, kind } だけに絞る。release は
-            リソース管理の関心事で、表示コンポーネントが触るべきものではない。 */}
-        <Mascot
-          mascot={mascot}
-          state={mascotState}
-          mediaOverride={
-            mediaOverride && { url: mediaOverride.url, kind: mediaOverride.kind }
-          }
-        />
+        {/* Mascot へ渡すのは表示に要る { url, kind } だけに絞る(toDisplayMap)。
+            release はリソース管理の関心事で、表示コンポーネントが触るべきものではない。 */}
+        <div className="sidebar">
+          <Mascot
+            mascot={mascot}
+            state={mascotState}
+            assignments={displayAssignments}
+            previewState={previewState}
+          />
+          <MediaAssignPanel
+            states={mascotStates}
+            assignments={assignments}
+            onPick={handlePickFor}
+            onClear={handleClearFor}
+            onApplyAll={handleApplyAll}
+            onPreview={setPreviewState}
+          />
+        </div>
       </div>
     </div>
   )

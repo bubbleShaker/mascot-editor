@@ -1,6 +1,12 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs/promises')
+// require した時点で mascot-media スキームの特権登録が走る(whenReady より前に必要)。
+const {
+  issueMediaToken,
+  releaseMediaToken,
+  registerMediaProtocol,
+} = require('./mediaProtocol.js')
 
 // MASCOT_DEV=1 のとき Vite dev server を読む。未設定/0 なら build 済み dist を読む。
 const isDev = process.env.MASCOT_DEV === '1'
@@ -8,6 +14,18 @@ const isDev = process.env.MASCOT_DEV === '1'
 // テキストファイルの絞り込み(開く/保存ダイアログ共通)
 const TEXT_FILTERS = [
   { name: 'テキスト', extensions: ['txt', 'md', 'js', 'jsx', 'ts', 'json', 'html', 'css'] },
+  { name: 'すべて', extensions: ['*'] },
+]
+
+// マスコット素材の絞り込み。
+// 注意: この拡張子リストは renderer 側 config/media.js の VIDEO/IMAGE_EXTENSIONS と
+// 対で維持する。main は CommonJS、media.js は ESM なので共有できない。
+// 片方だけ増やすと「ダイアログで選べるのに <img> で描画されて壊れる」ことになる。
+const MEDIA_FILTERS = [
+  {
+    name: '画像/動画',
+    extensions: ['svg', 'png', 'gif', 'webp', 'jpg', 'jpeg', 'avif', 'mp4', 'webm', 'ogv', 'mov', 'm4v'],
+  },
   { name: 'すべて', extensions: ['*'] },
 ]
 
@@ -55,6 +73,24 @@ function registerFileHandlers() {
   })
 }
 
+// 素材選択の IPC。実パスは mediaProtocol に閉じ、renderer へはトークン URL だけ返す。
+function registerMediaHandlers() {
+  ipcMain.handle('media:pick', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: MEDIA_FILTERS,
+    })
+    if (canceled || !filePaths[0]) return null
+    const filePath = filePaths[0]
+    return { url: issueMediaToken(filePath), name: path.basename(filePath) }
+  })
+
+  ipcMain.handle('media:release', (_e, url) => {
+    if (typeof url === 'string') releaseMediaToken(url)
+    return null
+  })
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1100,
@@ -80,6 +116,8 @@ function createWindow() {
 
 app.whenReady().then(() => {
   registerFileHandlers()
+  registerMediaHandlers()
+  registerMediaProtocol()
   createWindow()
   // macOS: dock から再アクティブ時に window が無ければ作り直す作法。
   app.on('activate', () => {

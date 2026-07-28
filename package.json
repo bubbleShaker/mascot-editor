@@ -10,6 +10,8 @@
     "dev": "concurrently -k -n vite,electron -c cyan,green \"vite\" \"wait-on tcp:5173 && cross-env MASCOT_DEV=1 electron .\"",
     "build": "vite build",
     "check:media": "electron --ozone-platform=headless scripts/check-media-protocol.js",
+    "check:assign": "node scripts/check-media-assignments.mjs",
+    "check": "npm run check:media && npm run check:assign",
     "start": "cross-env MASCOT_DEV=0 electron ."
   },
   "devDependencies": {

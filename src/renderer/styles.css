@@ -56,6 +56,22 @@ body {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.btn:disabled:hover {
+  border-color: var(--color-border);
+  color: var(--color-fg);
+}
+.btn--sm {
+  padding: 3px 8px;
+  font-size: 12px;
+}
+.btn--wide {
+  width: 100%;
+  margin-top: 4px;
+}
 .toolbar__file {
   display: flex;
   align-items: center;
@@ -115,16 +131,23 @@ body {
   background: var(--color-selection);
 }
 
+/* --- Sidebar (Mascot + 割当パネル) --- */
+.sidebar {
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-panel);
+  border-left: 1px solid var(--color-border);
+  overflow-y: auto;
+}
+
 /* --- Mascot --- */
 .mascot {
-  width: 240px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
   padding: 16px 12px;
-  background: var(--color-panel);
-  border-left: 1px solid var(--color-border);
 }
 .mascot__stage {
   display: flex;
@@ -155,4 +178,46 @@ body {
   color: var(--color-accent);
   font-weight: 700;
   margin-bottom: 2px;
+}
+
+/* --- 素材の割当パネル --- */
+.assign {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.assign__title {
+  font-size: 12px;
+  color: var(--color-muted);
+  font-weight: 700;
+}
+.assign__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+.assign__row:hover {
+  background: var(--color-bg);
+}
+.assign__state {
+  width: 44px;
+  font-size: 12px;
+  color: var(--color-accent);
+}
+/* 素材名は長くなりがちなので、行を崩さず省略する(全文は title 属性で出る)。 */
+.assign__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.assign__name--default {
+  color: var(--color-muted);
 }

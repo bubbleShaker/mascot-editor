@@ -25,6 +25,9 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # 割当の解放判定は壊れても build が通ってしまうので、先に検査する。
+      # check:media は Electron の実行環境が要るため CI では走らせない。
+      - run: npm run check:assign
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

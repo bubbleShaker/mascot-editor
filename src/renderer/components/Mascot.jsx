@@ -5,18 +5,14 @@ import MascotMedia from './MascotMedia.jsx'
 //
 // assignments はユーザーがピッカーで選んだ状態ごとの素材 { state: {url,kind} }。
 // 未割当の状態は同梱サンプル(mascot.resolvedStates)へフォールバックする。
-//
-// previewState は割当パネルを指している間だけの一時表示。実際の state は
-// 変えずに「その状態ならこう見える」を出すためのもの。
-export default function Mascot({ mascot, state, assignments, previewState }) {
+export default function Mascot({ mascot, state, assignments }) {
   if (!mascot) return null
 
   // 割当か同梱のどちらかで絵が出せる状態だけを採用し、出せなければ default へ。
   // 割当だけがある状態(同梱素材を持たない状態)も表示対象にしたいので、
   // 判定は「割当 or 同梱」の or になる。
-  const requested = previewState ?? state
-  const hasMedia = assignments?.[requested] || mascot.resolvedStates?.[requested]
-  const activeState = hasMedia ? requested : mascot.default
+  const hasMedia = assignments?.[state] || mascot.resolvedStates?.[state]
+  const activeState = hasMedia ? state : mascot.default
 
   const media = assignments?.[activeState] ?? mascot.resolvedStates?.[activeState]
   const line = mascot.lines?.[activeState]

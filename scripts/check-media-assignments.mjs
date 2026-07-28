@@ -12,6 +12,7 @@ import {
   entriesToRelease,
   statesOf,
   toDisplayMap,
+  toNameMap,
 } from '../src/renderer/services/mediaAssignments.mjs'
 
 const results = []
@@ -100,6 +101,16 @@ const STATES = ['idle', 'happy', 'error']
     `keys=${keys.join(',')}`
   )
   check('未割当は表示用マップに載らない', !('happy' in view))
+}
+
+// 7b. 割当パネル用マップは名前だけ(url も release も渡さない)
+{
+  const e1 = makeEntry('a')
+  const names = toNameMap({ idle: e1, happy: null })
+  check(
+    'パネル用は名前だけ',
+    names.idle === 'a' && !('happy' in names) && typeof names.idle === 'string'
+  )
 }
 
 // 8. 状態一覧は JSON(states)由来。増やせば UI の行も増える

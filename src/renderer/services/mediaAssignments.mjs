@@ -49,3 +49,15 @@ export function toDisplayMap(assignments) {
   }
   return out
 }
+
+/**
+ * 割当パネル用に、状態 → 表示名 だけへ絞る。
+ * パネルが要るのは名前だけなので、url も release も渡さない(最小の情報)。
+ */
+export function toNameMap(assignments) {
+  const out = {}
+  for (const [state, entry] of Object.entries(assignments ?? {})) {
+    if (entry) out[state] = entry.name
+  }
+  return out
+}

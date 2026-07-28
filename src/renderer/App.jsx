@@ -7,6 +7,7 @@ import {
   entriesToRelease,
   statesOf,
   toDisplayMap,
+  toNameMap,
 } from './services/mediaAssignments.mjs'
 import Toolbar from './components/Toolbar.jsx'
 import Editor from './components/Editor.jsx'
@@ -118,22 +119,56 @@ export default function App() {
   const assignmentsRef = useRef({})
   const applyAssignments = useCallback((next) => {
     for (const entry of entriesToRelease(assignmentsRef.current, next)) {
-      entry.release?.()
+      // 1件の失敗で残りの解放と ref 更新を巻き添えにしない。
+      try {
+        entry.release?.()
+      } catch (e) {
+        console.error(e)
+      }
     }
     assignmentsRef.current = next
     setAssignments(next)
   }, [])
 
   // アンマウント時に残り全部を解放する。
-  useEffect(() => () => applyAssignments({}), [applyAssignments])
+  // ここで applyAssignments を使わないのは、cleanup が setState まで呼ぶと
+  // dev の Fast Refresh で effect が張り直された時に「まだ生きているのに
+  // 割当が空に戻る」副作用が出るから。後始末は ref だけ見て release する。
+  useEffect(
+    () => () => {
+      for (const entry of entriesToRelease(assignmentsRef.current, {})) {
+        try {
+          entry.release?.()
+        } catch (e) {
+          console.error(e)
+        }
+      }
+      assignmentsRef.current = {}
+    },
+    []
+  )
+
+  // pick() の解決を待つ間にアンマウントされたら、選ばれた素材を捨てる。
+  // 捨てないと、後始末が済んだ後に新しいエントリが ref に入り、
+  // 誰も解放しないまま残る(Electron はトークン、ブラウザは blob URL が居座る)。
+  const aliveRef = useRef(true)
+  useEffect(() => {
+    aliveRef.current = true
+    return () => {
+      aliveRef.current = false
+    }
+  }, [])
 
   // 素材を選ばせて、出来上がった割当マップを作る関数を受け取り適用する。
   // 「1状態だけ」と「全部に適用」でダイアログ〜エラー処理が同じなので共通化する。
+  // buildNext を await の後で評価するのが要点で、ダイアログ表示中に別の割当が
+  // 変わっても、常に最新の割当マップの上に載る(後勝ちで一貫する)。
   const pickInto = useCallback(
     async (buildNext) => {
       try {
         const picked = await mediaService.pick()
         if (!picked) return // キャンセル
+        if (!aliveRef.current) return picked.release?.()
         applyAssignments(buildNext(picked))
         flash('happy')
       } catch (e) {
@@ -156,11 +191,24 @@ export default function App() {
   )
 
   const handleClearFor = useCallback(
-    (state) => applyAssignments({ ...assignmentsRef.current, [state]: null }),
+    (state) => {
+      // キーごと落とす(null を残すとマップに使わないキーが溜まる)。
+      const { [state]: _removed, ...rest } = assignmentsRef.current
+      applyAssignments(rest)
+    },
     [applyAssignments]
   )
 
+  // ウィンドウがフォーカスを失うとホバー解除が飛ばないことがあるので、
+  // 保険としてここでもプレビューを畳む(張り付くと表情連動が見えなくなる)。
+  useEffect(() => {
+    const clear = () => setPreviewState(null)
+    window.addEventListener('blur', clear)
+    return () => window.removeEventListener('blur', clear)
+  }, [])
+
   const displayAssignments = useMemo(() => toDisplayMap(assignments), [assignments])
+  const assignedNames = useMemo(() => toNameMap(assignments), [assignments])
 
   // ショートカット: Ctrl/Cmd+S 保存 / Shift 付きで名前を付けて保存 / Ctrl+O 開く。
   useEffect(() => {
@@ -203,15 +251,17 @@ export default function App() {
         {/* Mascot へ渡すのは表示に要る { url, kind } だけに絞る(toDisplayMap)。
             release はリソース管理の関心事で、表示コンポーネントが触るべきものではない。 */}
         <div className="sidebar">
+          {/* プレビュー中はその状態を「今の状態」として渡す。Mascot は
+              プレビューという UI 操作を知らずに済み、実際の mascotState も
+              変わらないので表情連動はそのまま動く。 */}
           <Mascot
             mascot={mascot}
-            state={mascotState}
+            state={previewState ?? mascotState}
             assignments={displayAssignments}
-            previewState={previewState}
           />
           <MediaAssignPanel
             states={mascotStates}
-            assignments={assignments}
+            names={assignedNames}
             onPick={handlePickFor}
             onClear={handleClearFor}
             onApplyAll={handleApplyAll}

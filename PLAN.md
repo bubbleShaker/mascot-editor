@@ -42,7 +42,11 @@ assets/                 キャラ画像素材
         Electron はカスタムプロトコル `mascot-media://` で、dialog を通ったパスに
         発行した使い捨てトークンのみ配信(M1 の allowedPaths と同じ防御線を
         読み出しにも延長)。ブラウザは blob URL。`npm run check:media` で境界を検査。
-  - [ ] M4-3: 状態(idle/happy/error)ごとの個別割当 UI。
+  - [x] M4-3: 状態ごとの個別割当 UI + プレビュー。割当は state→エントリのマップで持ち、
+        解放は「旧マップに居て新マップに居ないエントリだけ」= 集合差分で判定する
+        (同じ素材を複数状態が参照するため)。判定は純粋関数に切り出し、
+        `npm run check:assign` で回帰ガード。割当行のホバー/フォーカス中だけ
+        その状態をプレビュー(実際の mascotState は変えない)。
   - [ ] M4-4: 選択内容の永続化(M5 と連動)。
 - [ ] M5: 設定永続化(最後のテーマ/キャラ/メディア/開いてたファイル)。
 
@@ -53,4 +57,4 @@ assets/                 キャラ画像素材
 ## 開発サイクル
 Issue 起票 → 実装 → reviewer サブエージェントでレビュー → PR → マージ。
 🔴 must 指摘は解消してから次へ。/compact はマイルストーン区切りで。
-PR 前に `npm run build` と `npm run check:media` を通す。
+PR 前に `npm run build` と `npm run check`(= check:media + check:assign)を通す。

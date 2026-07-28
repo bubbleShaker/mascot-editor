@@ -6,11 +6,13 @@
 //     File.type(MIME) から判定するしかない
 // 呼び出し側は判定方法を知らず、{ url, kind } という同じ形だけを受け取る。
 
-// 注意: この拡張子リストは loader.js の import.meta.glob パターンと対で維持する。
-// Vite の glob はリテラルしか受け付けないため共通化できない。片方だけ増やすと
-// 「JSON に書いたのに素材が見つからない」/「動画なのに <img> で出る」ことになる。
-const VIDEO_EXTENSIONS = new Set(['mp4', 'webm', 'ogv', 'mov', 'm4v'])
-const IMAGE_EXTENSIONS = new Set(['svg', 'png', 'gif', 'webp', 'jpg', 'jpeg', 'avif'])
+// 拡張子リストは config/media-extensions.json が唯一の出所。main プロセス(CJS)も
+// 同じ JSON を読むので、対応形式を増やす時の変更点が 1 箇所で済む。
+// 例外は loader.js の import.meta.glob パターンだけ(Vite がリテラルしか受け付けない)。
+import mediaExtensions from '../../../config/media-extensions.json'
+
+const VIDEO_EXTENSIONS = new Set(mediaExtensions.video)
+const IMAGE_EXTENSIONS = new Set(mediaExtensions.image)
 
 /** 'assets/a/b.webm' → 'webm' / 拡張子が無ければ null */
 function extensionOf(filePath) {

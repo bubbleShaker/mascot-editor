@@ -38,9 +38,10 @@ assets/                 キャラ画像素材
       状態(idle/happy/error)ごとに別メディアも割当可能。選択内容は永続化。
   - [x] M4-1: 描画層の動画対応。loader が `{ url, kind }` を返し、MascotMedia が
         kind で `<img>`/`<video>` を出し分ける。JSON に動画パスを書けば動く状態。
-  - [ ] M4-2: mediaService(環境切替) + ピッカー UI で 1 状態を差し替え。
-        Electron はカスタムプロトコル `mascot-media://` で許可済みパスのみ配信
-        (M1 の allowedPaths と同じ防御線を読み出しにも延長)。ブラウザは blob URL。
+  - [x] M4-2: mediaService(環境切替) + ピッカー UI。選んだ 1 つを全状態へ適用。
+        Electron はカスタムプロトコル `mascot-media://` で、dialog を通ったパスに
+        発行した使い捨てトークンのみ配信(M1 の allowedPaths と同じ防御線を
+        読み出しにも延長)。ブラウザは blob URL。`npm run check:media` で境界を検査。
   - [ ] M4-3: 状態(idle/happy/error)ごとの個別割当 UI。
   - [ ] M4-4: 選択内容の永続化(M5 と連動)。
 - [ ] M5: 設定永続化(最後のテーマ/キャラ/メディア/開いてたファイル)。
@@ -52,3 +53,4 @@ assets/                 キャラ画像素材
 ## 開発サイクル
 Issue 起票 → 実装 → reviewer サブエージェントでレビュー → PR → マージ。
 🔴 must 指摘は解消してから次へ。/compact はマイルストーン区切りで。
+PR 前に `npm run build` と `npm run check:media` を通す。

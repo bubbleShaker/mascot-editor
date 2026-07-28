@@ -17,4 +17,10 @@ contextBridge.exposeInMainWorld('mascotEditor', {
     saveAs: (content, suggestedName) =>
       ipcRenderer.invoke('file:saveAs', { content, suggestedName }),
   },
+  // マスコット素材の選択。返るのは { url, name } で、url は mascot-media:// の
+  // トークン URL。実パスは main に閉じたままで renderer へは渡らない。
+  media: {
+    pick: () => ipcRenderer.invoke('media:pick'),
+    release: (url) => ipcRenderer.invoke('media:release', url),
+  },
 })

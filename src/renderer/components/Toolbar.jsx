@@ -8,6 +8,9 @@ export default function Toolbar({
   dirty,
   onOpen,
   onSave,
+  mediaName,
+  onPickMedia,
+  onResetMedia,
 }) {
   return (
     <header className="toolbar">
@@ -29,8 +32,28 @@ export default function Toolbar({
 
       <div className="toolbar__spacer" />
 
+      <div className="toolbar__actions">
+        <button
+          className="btn"
+          onClick={onPickMedia}
+          title="画像/動画を選んでマスコットに設定"
+        >
+          キャラ素材…
+        </button>
+        {mediaName && (
+          <button className="btn" onClick={onResetMedia} title="同梱の素材に戻す">
+            戻す
+          </button>
+        )}
+      </div>
+
       {mascotLabel && (
         <span className="toolbar__mascot">キャラ: {mascotLabel}</span>
+      )}
+      {mediaName && (
+        <span className="toolbar__mascot" title={mediaName}>
+          素材: {mediaName}
+        </span>
       )}
       <label className="toolbar__theme">
         テーマ

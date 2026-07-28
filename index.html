@@ -3,10 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Electron のセキュリティ推奨: renderer での外部読込を絞る CSP -->
+    <!-- Electron のセキュリティ推奨: renderer での外部読込を絞る CSP。
+         ユーザーが選んだマスコット素材のぶんだけ穴を開ける:
+           blob:         … ブラウザで選んだファイルの一時参照
+           mascot-media: … Electron の専用プロトコル(main が許可した素材のみ配信)
+         media-src を明示しないと default-src 'self' に落ちて、動画が
+         無言で再生されないバグになる。 -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+      content="default-src 'self'; img-src 'self' data: blob: mascot-media:; media-src 'self' blob: mascot-media:; style-src 'self' 'unsafe-inline'; script-src 'self'"
     />
     <title>mascot-editor</title>
   </head>

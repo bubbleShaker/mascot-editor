@@ -1,0 +1,5 @@
+{
+  "_comment": "マスコット素材として扱う拡張子の唯一の出所。main(CJS) は require、renderer(ESM) は import で読む。src/renderer/config/loader.js の import.meta.glob だけは Vite の制約でリテラルを書く必要があるため、ここを増やしたら glob パターンも合わせること。",
+  "image": ["svg", "png", "gif", "webp", "jpg", "jpeg", "avif"],
+  "video": ["mp4", "webm", "ogv", "mov", "m4v"]
+}

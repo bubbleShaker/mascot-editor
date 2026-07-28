@@ -48,8 +48,11 @@ export default function Toolbar({
       </div>
 
       {mascotLabel && (
-        <span className="toolbar__mascot" title={mediaName ?? undefined}>
-          キャラ: {mediaName ?? mascotLabel}
+        <span className="toolbar__mascot">キャラ: {mascotLabel}</span>
+      )}
+      {mediaName && (
+        <span className="toolbar__mascot" title={mediaName}>
+          素材: {mediaName}
         </span>
       )}
       <label className="toolbar__theme">

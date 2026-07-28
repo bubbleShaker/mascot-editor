@@ -19,8 +19,8 @@ const electronService = {
   async pick() {
     const res = await window.mascotEditor.media.pick()
     if (!res) return null
-    // kind は URL ではなく元のファイル名から判定する。トークン URL にも拡張子は
-    // 残してあるが、「表示の判断材料は元のファイル」という筋を通しておく。
+    // kind は元のファイル名から判定する。トークン URL は意味を持たない
+    // 不透明な識別子(拡張子を含まない)なので、判断材料になるのは name だけ。
     return {
       url: res.url,
       kind: mediaKindFromPath(res.name),
@@ -39,6 +39,9 @@ const webService = {
       const input = document.createElement('input')
       input.type = 'file'
       input.accept = `${ACCEPT},image/*,video/*`
+      // キャンセルは onchange が発火しないので oncancel で拾う。
+      // 拾わないと Promise が解決されず、呼び出し側が待ち続ける。
+      input.oncancel = () => resolve(null)
       input.onchange = () => {
         const file = input.files?.[0]
         if (!file) return resolve(null)

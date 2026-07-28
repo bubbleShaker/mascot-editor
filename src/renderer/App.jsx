@@ -166,7 +166,15 @@ export default function App() {
             setDirty(true)
           }}
         />
-        <Mascot mascot={mascot} state={mascotState} mediaOverride={mediaOverride} />
+        {/* Mascot へ渡すのは表示に要る { url, kind } だけに絞る。release は
+            リソース管理の関心事で、表示コンポーネントが触るべきものではない。 */}
+        <Mascot
+          mascot={mascot}
+          state={mascotState}
+          mediaOverride={
+            mediaOverride && { url: mediaOverride.url, kind: mediaOverride.kind }
+          }
+        />
       </div>
     </div>
   )

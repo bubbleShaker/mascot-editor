@@ -131,9 +131,9 @@ export default function App() {
   }, [])
 
   // アンマウント時に残り全部を解放する。
-  // ここで applyAssignments を使わないのは、cleanup が setState まで呼ぶと
-  // dev の Fast Refresh で effect が張り直された時に「まだ生きているのに
-  // 割当が空に戻る」副作用が出るから。後始末は ref だけ見て release する。
+  // ここで applyAssignments を使わないのは、cleanup に setState まで巻き込むと
+  // 後始末が「解放」以外の副作用を持つから。後始末は ref を見て release する
+  // ことだけに限定する(解放そのものは cleanup が走れば当然起きる)。
   useEffect(
     () => () => {
       for (const entry of entriesToRelease(assignmentsRef.current, {})) {

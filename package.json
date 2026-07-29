@@ -11,7 +11,8 @@
     "build": "vite build",
     "check:media": "electron --ozone-platform=headless scripts/check-media-protocol.js",
     "check:assign": "node scripts/check-media-assignments.mjs",
-    "check": "npm run check:media && npm run check:assign",
+    "check:settings": "electron --ozone-platform=headless scripts/check-settings-store.js",
+    "check": "npm run check:media && npm run check:assign && npm run check:settings",
     "start": "cross-env MASCOT_DEV=0 electron ."
   },
   "devDependencies": {

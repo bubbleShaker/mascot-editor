@@ -4,10 +4,13 @@ const fs = require('node:fs/promises')
 // require した時点で mascot-media スキームの特権登録が走る(whenReady より前に必要)。
 const {
   issueMediaToken,
+  pathFromMediaUrl,
   releaseMediaToken,
   releaseAllMediaTokens,
   registerMediaProtocol,
 } = require('./mediaProtocol.js')
+const { isSupportedMedia, supportedMediaExtensions } = require('./mediaFormats.js')
+const { createSettingsStore } = require('./settingsStore.js')
 
 // MASCOT_DEV=1 のとき Vite dev server を読む。未設定/0 なら build 済み dist を読む。
 const isDev = process.env.MASCOT_DEV === '1'
@@ -18,19 +21,11 @@ const TEXT_FILTERS = [
   { name: 'すべて', extensions: ['*'] },
 ]
 
-// マスコット素材の絞り込み。拡張子は renderer(config/media.js)と同じ JSON から読む。
-// 二重管理をやめたのは、片方だけ増やすと「ダイアログで選べるのに <img> で
-// 描画されて壊れる」というズレが起きるため。
-const mediaExtensions = require('../../config/media-extensions.json')
-const MEDIA_EXTENSIONS = new Set([...mediaExtensions.image, ...mediaExtensions.video])
+// マスコット素材の絞り込み。対応形式の判定は mediaFormats に集約してある
+// (設定からの復元でも同じ判定が要るため)。
 // 「すべて」を出さないのは、任意ファイル(例: HTML)にトークンを発行させないため。
 // トークンは配信可能な URL なので、file:open の読み出しより影響が長く残る。
-const MEDIA_FILTERS = [{ name: '画像/動画', extensions: [...MEDIA_EXTENSIONS] }]
-
-/** ダイアログのフィルタは OS 依存で抜けうるので、選択後にも拡張子を検証する。 */
-function isSupportedMedia(filePath) {
-  return MEDIA_EXTENSIONS.has(path.extname(filePath).slice(1).toLowerCase())
-}
+const MEDIA_FILTERS = [{ name: '画像/動画', extensions: supportedMediaExtensions() }]
 
 // renderer からの file 操作要求を受ける。fs はここ(main)だけが触る。
 //
@@ -100,6 +95,20 @@ function registerMediaHandlers() {
   })
 }
 
+// 設定の永続化。保存先は OS ごとのアプリ用ディレクトリ(userData)。
+// app.getPath は whenReady 後に呼ぶ必要があるので、ここで store を作る。
+function registerSettingsHandlers() {
+  // 素材の参照方式(トークン)は settingsStore の関心事ではないので注入する。
+  const store = createSettingsStore({
+    dir: app.getPath('userData'),
+    issueToken: issueMediaToken,
+    releaseToken: releaseMediaToken,
+    resolveUrl: pathFromMediaUrl,
+  })
+  ipcMain.handle('settings:load', () => store.load())
+  ipcMain.handle('settings:save', (_e, settings) => store.save(settings))
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1100,
@@ -146,6 +155,7 @@ function createWindow() {
 app.whenReady().then(() => {
   registerFileHandlers()
   registerMediaHandlers()
+  registerSettingsHandlers()
   registerMediaProtocol()
   createWindow()
   // macOS: dock から再アクティブ時に window が無ければ作り直す作法。

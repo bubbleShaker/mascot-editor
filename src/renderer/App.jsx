@@ -2,12 +2,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { loadThemes, loadMascots } from './config/loader.js'
 import { fileService } from './services/fileService.js'
 import { mediaService } from './services/mediaService.js'
+import { settingsService } from './services/settingsService.js'
 import {
   assignAll,
   entriesToRelease,
+  fromRestored,
+  pickStates,
   statesOf,
   toDisplayMap,
   toNameMap,
+  toUrlMap,
 } from './services/mediaAssignments.mjs'
 import Toolbar from './components/Toolbar.jsx'
 import Editor from './components/Editor.jsx'
@@ -24,6 +28,17 @@ function applyTheme(theme) {
 }
 
 const INITIAL_TEXT = '// mascot-editor\n// ここに書く\n'
+
+// 素材エントリの後始末。1 件の失敗で残りを巻き添えにしない。
+function releaseAll(entries) {
+  for (const entry of entries) {
+    try {
+      entry.release?.()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+}
 
 export default function App() {
   const themes = useMemo(() => loadThemes(), [])
@@ -117,18 +132,54 @@ export default function App() {
   // 解放対象の判定は entriesToRelease に任せる: 同じエントリを複数状態が
   // 参照していることがあるので、「どこからも参照されなくなった分」だけを解放する。
   const assignmentsRef = useRef({})
-  const applyAssignments = useCallback((next) => {
-    for (const entry of entriesToRelease(assignmentsRef.current, next)) {
-      // 1件の失敗で残りの解放と ref 更新を巻き添えにしない。
+  // ユーザーが一度でも割当を操作したか。復元が後から来ても上書きしない判定に使う
+  // (「今は空」ではダメで、選んでから解除しても空に戻るため)。
+  const touchedRef = useRef(false)
+  const applyAssignments = useCallback((next, { persist = true } = {}) => {
+    releaseAll(entriesToRelease(assignmentsRef.current, next))
+    assignmentsRef.current = next
+    setAssignments(next)
+    if (!persist) return
+    touchedRef.current = true
+    // 永続化は「割当が変わった」ことの副産物なので、完了を待たずに投げる。
+    // 失敗しても編集は続けられる(次回起動で復元できないだけ)。
+    settingsService.save({ assignments: toUrlMap(next) }).catch((e) => console.error(e))
+  }, [])
+
+  // 起動時に前回の割当を復元する。復元できるかは環境しだいで、
+  // Electron は main が再発行したトークン、ブラウザは復元不能(= 同梱素材のまま)。
+  useEffect(() => {
+    // アンマウント判定を aliveRef と分けているのは、こちらが「この復元処理は
+    // もう用済み」という一回きりの話だから(StrictMode の二重マウントで、
+    // 1 回目の復元だけを捨てたい)。aliveRef はコンポーネントの生死を指す。
+    let cancelled = false
+    ;(async () => {
       try {
-        entry.release?.()
+        const settings = await settingsService.load()
+        const all = fromRestored(settings?.assignments, mediaService.adopt)
+        // マスコットが持たない状態は捨てる。UI に出ないまま素材を掴み続け、
+        // 保存のたびに書き戻されて増え続けるのを防ぐ。
+        const restored = pickStates(all, mascotStates)
+        releaseAll(entriesToRelease(all, restored))
+        if (Object.keys(restored).length === 0) return
+        // 復元を待つ間にアンマウントされた、あるいはユーザーが先に操作していたら、
+        // 復元分は捨てる。上書きすると、先に選ばれたエントリが誰にも解放されない
+        // まま参照を失う(トークン/blob URL が居座る)。
+        if (cancelled || touchedRef.current) {
+          releaseAll(entriesToRelease(restored, {}))
+          return
+        }
+        // 復元では保存しない。検証に落ちた分(取り外した USB の素材など)が
+        // 間引かれた状態で書き戻され、設定から永久に消えてしまう。
+        applyAssignments(restored, { persist: false })
       } catch (e) {
         console.error(e)
       }
+    })()
+    return () => {
+      cancelled = true
     }
-    assignmentsRef.current = next
-    setAssignments(next)
-  }, [])
+  }, [applyAssignments, mascotStates])
 
   // アンマウント時に残り全部を解放する。
   // ここで applyAssignments を使わないのは、cleanup に setState まで巻き込むと
@@ -136,13 +187,7 @@ export default function App() {
   // ことだけに限定する(解放そのものは cleanup が走れば当然起きる)。
   useEffect(
     () => () => {
-      for (const entry of entriesToRelease(assignmentsRef.current, {})) {
-        try {
-          entry.release?.()
-        } catch (e) {
-          console.error(e)
-        }
-      }
+      releaseAll(entriesToRelease(assignmentsRef.current, {}))
       assignmentsRef.current = {}
     },
     []

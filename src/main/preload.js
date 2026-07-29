@@ -23,4 +23,10 @@ contextBridge.exposeInMainWorld('mascotEditor', {
     pick: () => ipcRenderer.invoke('media:pick'),
     release: (url) => ipcRenderer.invoke('media:release', url),
   },
+  // 設定の永続化。渡すのも受け取るのもトークン URL で、実パスは main に閉じたまま。
+  // load() は保存済みの素材へ新しいトークンを再発行して { url, name } で返す。
+  settings: {
+    load: () => ipcRenderer.invoke('settings:load'),
+    save: (settings) => ipcRenderer.invoke('settings:save', settings),
+  },
 })

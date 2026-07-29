@@ -51,6 +51,62 @@ export function toDisplayMap(assignments) {
 }
 
 /**
+ * 永続化層へ渡す用に、割当マップを 状態 → url だけへ絞る。
+ * url が何を指すか(トークン URL か blob URL か)は呼び出し側の関心事ではない。
+ */
+export function toUrlMap(assignments) {
+  const out = {}
+  for (const [state, entry] of Object.entries(assignments ?? {})) {
+    if (entry?.url) out[state] = entry.url
+  }
+  return out
+}
+
+/**
+ * 永続化層から復元された { state: { url, name } } を、割当マップへ組み直す。
+ *
+ * 要点は「同じ url は 1 エントリに寄せる」こと(dedupe)。復元後も複数状態が
+ * 同一エントリを共有していないと、entriesToRelease の集合差分が同じ素材を
+ * 別物と見なし、まだ他の状態が使っている URL を解放してしまう。
+ *
+ * adopt(saved) は復元された素材をエントリへ仕立てる関数(mediaService が渡す)。
+ * 復元できない環境/素材では null を返すので、その状態は割当なし = 同梱素材になる。
+ */
+export function fromRestored(restored, adopt) {
+  const byUrl = new Map()
+  // 設定ファイルは手で書けるので、キーも信頼できない入力として扱う。
+  // プロトタイプ無しの辞書なら `__proto__` というキーが来ても
+  // プロトタイプ差し替えにならず、ただのキーとして扱われる。
+  const out = Object.create(null)
+  for (const [state, saved] of Object.entries(restored ?? {})) {
+    const url = saved?.url
+    if (!url) continue
+    // 仕立ては url ごとに一度だけ(失敗した null も覚えて呼び直さない)。
+    if (!byUrl.has(url)) byUrl.set(url, adopt(saved) ?? null)
+    const entry = byUrl.get(url)
+    if (entry) out[state] = entry
+  }
+  return out
+}
+
+/**
+ * 割当マップを、指定した状態だけに絞る。
+ *
+ * 復元の入口で使う。設定ファイルは手で書けるので、マスコットが持たない状態
+ * (`sleepy` など)がいくらでも混ざりうる。そのままだと UI から見えないのに
+ * 素材を掴み続け、保存のたびに書き戻されて増え続ける。
+ * 落とした分は呼び出し側が解放する(entriesToRelease に渡せば求まる)。
+ */
+export function pickStates(assignments, states) {
+  const allowed = new Set(states ?? [])
+  const out = {}
+  for (const [state, entry] of Object.entries(assignments ?? {})) {
+    if (entry && allowed.has(state)) out[state] = entry
+  }
+  return out
+}
+
+/**
  * 割当パネル用に、状態 → 表示名 だけへ絞る。
  * パネルが要るのは名前だけなので、url も release も渡さない(最小の情報)。
  */

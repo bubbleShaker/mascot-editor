@@ -6,6 +6,10 @@
 // pick() の返り値は { url, kind, name, release } または null(キャンセル)。
 // release() は「この URL をもう使わない」と伝える後始末。実体は環境で違う
 // (Electron はトークン破棄、ブラウザは revokeObjectURL)が、呼ぶ側は区別しない。
+//
+// adopt(saved) は「設定から復元された素材」を同じ形のエントリに仕立てる。
+// 復元できるかどうかも環境差なので、ここで吸収して呼ぶ側に分岐を持ち込ませない
+// (Electron は再発行されたトークン、ブラウザは復元不能で常に null)。
 
 import {
   mediaKindFromMime,
@@ -15,19 +19,29 @@ import {
 
 const isElectron = () => window.mascotEditor?.isElectron === true
 
+// main から来た { url, name } を素材エントリへ仕立てる。
+// kind は元のファイル名から判定する。トークン URL は意味を持たない
+// 不透明な識別子(拡張子を含まない)なので、判断材料になるのは name だけ。
+// pick(選ぶ)と adopt(設定から復元する)で仕立て方は同じなので共通化する。
+function toElectronEntry(res) {
+  return {
+    url: res.url,
+    kind: mediaKindFromPath(res.name),
+    name: res.name,
+    // 解放は呼びっぱなしにされる(後始末なので待つ意味がない)。IPC の拒否を
+    // ここで拾わないと unhandled rejection になるので、握って記録だけする。
+    release: () => {
+      window.mascotEditor.media.release(res.url).catch((e) => console.error(e))
+    },
+  }
+}
+
 const electronService = {
   async pick() {
     const res = await window.mascotEditor.media.pick()
-    if (!res) return null
-    // kind は元のファイル名から判定する。トークン URL は意味を持たない
-    // 不透明な識別子(拡張子を含まない)なので、判断材料になるのは name だけ。
-    return {
-      url: res.url,
-      kind: mediaKindFromPath(res.name),
-      name: res.name,
-      release: () => window.mascotEditor.media.release(res.url),
-    }
+    return res ? toElectronEntry(res) : null
   },
+  adopt: (saved) => (saved?.url && saved?.name ? toElectronEntry(saved) : null),
 }
 
 // <input type=file> の accept 属性。拡張子リストは media.js が唯一の出所。
@@ -57,6 +71,10 @@ const webService = {
       }
       input.click()
     }),
+  // ブラウザには復元できる素材が無い。blob URL はタブを閉じた時点で死んでおり、
+  // File への参照も残らない(ユーザーが選び直すしかない)。復元できるふりを
+  // しないよう常に null を返す ＝ その状態は同梱素材へフォールバックする。
+  adopt: () => null,
 }
 
 export const mediaService = isElectron() ? electronService : webService

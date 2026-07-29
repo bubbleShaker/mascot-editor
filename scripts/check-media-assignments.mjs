@@ -10,9 +10,12 @@
 import {
   assignAll,
   entriesToRelease,
+  fromRestored,
+  pickStates,
   statesOf,
   toDisplayMap,
   toNameMap,
+  toUrlMap,
 } from '../src/renderer/services/mediaAssignments.mjs'
 
 const results = []
@@ -121,6 +124,93 @@ const STATES = ['idle', 'happy', 'error']
     statesOf(mascot).join(',') === 'idle,happy,sleepy'
   )
   check('states が無くても落ちない', statesOf(undefined).length === 0)
+}
+
+// 9. 永続化用マップは 状態 → url だけ(未割当は載らない)
+{
+  const e1 = makeEntry('a')
+  const urls = toUrlMap({ idle: e1, happy: e1, error: null })
+  check(
+    '保存用は状態→url',
+    urls.idle === e1.url && urls.happy === e1.url && !('error' in urls),
+    JSON.stringify(urls)
+  )
+}
+
+// 10. 復元: 同じ url は 1 エントリへ寄せる(ここが本題)。
+//     別エントリに分かれると、片方を差し替えた時に entriesToRelease が
+//     「もう誰も使っていない」と誤判定し、生きている URL を殺してしまう。
+{
+  let adopted = 0
+  const adopt = (saved) => {
+    adopted += 1
+    return { url: saved.url, kind: 'image', name: saved.name, release() {} }
+  }
+  const map = fromRestored(
+    {
+      idle: { url: 'mascot-media://m/1', name: 'a.png' },
+      happy: { url: 'mascot-media://m/1', name: 'a.png' },
+      error: { url: 'mascot-media://m/2', name: 'b.webm' },
+    },
+    adopt
+  )
+  check('復元で同じ url は同一エントリ', map.idle === map.happy && map.idle !== map.error)
+  check('仕立ては url ごとに 1 回だけ', adopted === 2, `adopted=${adopted}`)
+
+  // 共有されているので、片方を差し替えても解放されない
+  const other = makeEntry('new')
+  check(
+    '復元後も共有エントリは解放されない',
+    entriesToRelease(map, { ...map, idle: other }).length === 0
+  )
+}
+
+// 11. 復元できない素材(adopt が null)はその状態を落とす = 同梱素材へ戻る
+{
+  let calls = 0
+  const adopt = () => {
+    calls += 1
+    return null
+  }
+  const map = fromRestored(
+    {
+      idle: { url: 'blob:dead', name: 'a.png' },
+      happy: { url: 'blob:dead', name: 'a.png' },
+    },
+    adopt
+  )
+  check('復元できない素材は割当に載らない', Object.keys(map).length === 0)
+  check('失敗した url も仕立て直さない', calls === 1, `calls=${calls}`)
+  check('設定が空でも落ちない', Object.keys(fromRestored(undefined, adopt)).length === 0)
+  check(
+    'url の無いエントリは無視する',
+    Object.keys(fromRestored({ idle: {}, happy: null }, adopt)).length === 0
+  )
+}
+
+// 12. 復元マップは信頼できないキーで壊れない(設定ファイルは手で書ける)
+{
+  const adopt = (saved) => ({ url: saved.url, kind: 'image', name: saved.name, release() {} })
+  const restored = JSON.parse('{"__proto__":{"url":"u1","name":"a.png"}}')
+  const map = fromRestored(restored, adopt)
+  check(
+    '__proto__ キーでプロトタイプが汚れない',
+    Object.getPrototypeOf(map) === null && Object.getPrototypeOf({}) === Object.prototype
+  )
+}
+
+// 13. マスコットが知らない状態は復元から落とす。
+//     落とした分は entriesToRelease に渡せば解放対象として求まる。
+{
+  const known = makeEntry('known')
+  const unknown = makeEntry('unknown')
+  const all = { idle: known, sleepy: unknown }
+  const picked = pickStates(all, STATES)
+  check('未知の状態は落ちる', Object.keys(picked).join(',') === 'idle')
+  const dropped = entriesToRelease(all, picked)
+  check('落とした分は解放対象になる', dropped.length === 1 && dropped[0] === unknown)
+  check('残した分は解放されない', !dropped.includes(known))
+  check('状態一覧が空なら全部落ちる', Object.keys(pickStates(all, [])).length === 0)
 }
 
 const failed = results.filter((r) => !r.ok)

@@ -60,6 +60,19 @@ function tokenFromUrl(url) {
 }
 
 /**
+ * 発行済みトークン URL を実パスへ解決する。未発行なら null。
+ *
+ * main プロセス内部専用(設定への保存に使う)。renderer へは絶対に返さないこと。
+ * ここが「renderer が設定へ任意パスを注入できない」根拠になっている:
+ * 設定に書けるのは、この関数が解決できたパス = 一度 dialog を通ったパスだけ。
+ */
+function pathFromMediaUrl(url) {
+  const token = tokenFromUrl(url)
+  if (!token) return null
+  return mediaTokens.get(token) ?? null
+}
+
+/**
  * トークンを破棄する。差し替え/終了時に呼ばないと、使わない素材への参照が
  * main のメモリに溜まり続ける(古い URL がいつまでも生きてしまう)。
  */
@@ -107,6 +120,7 @@ module.exports = {
   HOST,
   issueMediaToken,
   tokenFromUrl,
+  pathFromMediaUrl,
   releaseMediaToken,
   releaseAllMediaTokens,
   registerMediaProtocol,

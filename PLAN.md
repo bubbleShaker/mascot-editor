@@ -47,8 +47,16 @@ assets/                 キャラ画像素材
         (同じ素材を複数状態が参照するため)。判定は純粋関数に切り出し、
         `npm run check:assign` で回帰ガード。割当行のホバー/フォーカス中だけ
         その状態をプレビュー(実際の mascotState は変えない)。
-  - [ ] M4-4: 選択内容の永続化(M5 と連動)。
-- [ ] M5: 設定永続化(最後のテーマ/キャラ/メディア/開いてたファイル)。
+  - [x] M4-4: 選択内容の永続化。復元できる同一性は実パスだけだが、renderer に
+        パスは渡せない(M4-2 の防御線)ので、保存も復元も main が担う。renderer は
+        トークン URL を送り、main が発行済みトークンのみをパスへ解決して
+        `userData/settings.json` へ書く。起動時は拡張子 + 実体を検証してから
+        トークンを再発行(設定ファイルは外から書き換えうるため)。同一パスは
+        1 トークンへ dedupe しないと解放判定(集合差分)が崩れる。
+        ブラウザは blob URL が復元不能なので割当は保存しない。
+        `npm run check:settings` で境界を検査。
+- [ ] M5: 設定永続化(最後のテーマ/キャラ/開いてたファイル)。M4-4 の settings 基盤に
+      キーを足す形で拡張する。
 
 ## 長期ゴール(ユーザー要望)
 「動画・画像を好きに選べる」= M4 が本命。マスコットは静止画だけでなく mp4/webm 等の
@@ -57,4 +65,4 @@ assets/                 キャラ画像素材
 ## 開発サイクル
 Issue 起票 → 実装 → reviewer サブエージェントでレビュー → PR → マージ。
 🔴 must 指摘は解消してから次へ。/compact はマイルストーン区切りで。
-PR 前に `npm run build` と `npm run check`(= check:media + check:assign)を通す。
+PR 前に `npm run build` と `npm run check`(= check:media + check:assign + check:settings)を通す。

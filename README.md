@@ -66,7 +66,10 @@ npm start        # dist を読んで Electron 起動
 
 ## 検査
 ```bash
-npm run check:media   # mascot-media:// の防御線を検証(PR 前に実行する)
+npm run check          # 下の 3 つをまとめて実行(PR 前に通す)
+npm run check:media    # mascot-media:// の配信の防御線
+npm run check:assign   # 素材割当(解放判定・復元)の純粋関数
+npm run check:settings # 設定の永続化(任意パス注入・改竄された設定の復元)
 ```
 `vite build` は renderer しか見ないので、main ↔ renderer のプロセス境界は
 別途この検査で守る。画面が無い環境でも動くよう headless 指定込みで起動する。
